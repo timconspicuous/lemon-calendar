@@ -14,7 +14,6 @@ export const handler: Handlers = {
 		}
 
 		try {
-			// Use your custom formatting function instead of a fetch request
 			const events = await fetchCalendar(targetUrl);
 			const filteredEvents = filterEvents(events);
 
@@ -22,8 +21,11 @@ export const handler: Handlers = {
 			for (const event of filteredEvents) {
 				const startDate = new Date(event.start);
 				const unixTimestamp = Math.floor(startDate.getTime() / 1000);
-				formattedText += `\n- <t:${unixTimestamp}:F> | **${event.summary}**`;
-				if (event.description) formattedText += ` | ${event.description}`;
+				formattedText +=
+					`\n- <t:${unixTimestamp}:F> | **${event.summary}**`;
+				if (event.description) {
+					formattedText += ` | ${event.description}`;
+				}
 			}
 
 			return new Response(JSON.stringify({ result: formattedText }), {
