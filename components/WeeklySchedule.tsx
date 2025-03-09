@@ -2,7 +2,11 @@ import satori from "https://esm.sh/satori@0.12.1";
 import format from "https://deno.land/x/date_fns@v2.22.1/format/index.js";
 import { Event } from "../utils/calendarUtils.ts";
 
-export default function WeeklySchedule(events: Event[]) {
+export default function WeeklySchedule(
+	events: Event[],
+	startDate: Date,
+	endDate: Date,
+) {
 	const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 	return (
@@ -82,13 +86,17 @@ export default function WeeklySchedule(events: Event[]) {
 	);
 }
 
-export async function generateScheduleSVG(events: Event[]) {
+export async function generateScheduleSVG(
+	events: Event[],
+	startDate: Date,
+	endDate: Date,
+) {
 	const fontPath = "./static/fonts/Lazydog.ttf";
 	const fontData = await Deno.readFile(fontPath);
 
 	const svg = await satori(
 		// deno-lint-ignore no-explicit-any
-		WeeklySchedule(events) as any,
+		WeeklySchedule(events, startDate, endDate) as any,
 		{
 			width: 375,
 			height: 800,

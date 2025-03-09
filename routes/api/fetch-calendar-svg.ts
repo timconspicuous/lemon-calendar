@@ -1,9 +1,6 @@
 import { Handlers } from "$fresh/server.ts";
 import { generateScheduleSVG } from "../../components/WeeklySchedule.tsx";
-import {
-	filterEvents,
-	processCalendarRequest,
-} from "../../utils/calendarUtils.ts";
+import { processCalendarRequest } from "../../utils/calendarUtils.ts";
 
 export const handler: Handlers = {
 	async GET(req) {
@@ -14,8 +11,7 @@ export const handler: Handlers = {
 				url,
 			);
 
-			const filteredEvents = filterEvents(events, startDate, endDate);
-			const svg = generateScheduleSVG(filteredEvents);
+			const svg = generateScheduleSVG(events, startDate, endDate);
 
 			return new Response(await svg, {
 				headers: { "Content-Type": "image/svg+xml" },

@@ -1,8 +1,10 @@
 import ical from "npm:ical";
-import add from "https://deno.land/x/date_fns@v2.22.1/add/index.ts"
-import isAfter from "https://deno.land/x/date_fns@v2.22.1/isAfter/index.ts"
-import isBefore from "https://deno.land/x/date_fns@v2.22.1/isBefore/index.ts"
-import parseISO from "https://deno.land/x/date_fns@v2.22.1/parseISO/index.js"
+import add from "https://deno.land/x/date_fns@v2.22.1/add/index.ts";
+import isAfter from "https://deno.land/x/date_fns@v2.22.1/isAfter/index.ts";
+import isBefore from "https://deno.land/x/date_fns@v2.22.1/isBefore/index.ts";
+import parseISO from "https://deno.land/x/date_fns@v2.22.1/parseISO/index.js";
+import startOfDay from "https://deno.land/x/date_fns@v2.22.1/startOfDay/index.ts";
+import endOfDay from "https://deno.land/x/date_fns@v2.22.1/endOfDay/index.ts";
 
 export interface Event {
 	start: Date;
@@ -113,8 +115,8 @@ export async function processCalendarRequest(
 	}
 
 	// Parse date parameters
-	const startDate = new Date(startDateParam);
-	const endDate = new Date(endDateParam);
+	const startDate = startOfDay(new Date(startDateParam));
+	const endDate = endOfDay(new Date(endDateParam));
 
 	// Validate date parsing
 	if (isNaN(startDate.getTime())) {
