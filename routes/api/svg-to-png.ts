@@ -1,24 +1,33 @@
-// routes/api/svg-to-png.ts
 import { Handlers } from "$fresh/server.ts";
-import { Resvg } from "npm:@resvg/resvg-js";
+import { initialize, svg2png } from "npm:svg2png-wasm";
+
+// Initialize the WebAssembly module once
+let initialized = false;
+const initializeWasm = async () => {
+	if (!initialized) {
+		const wasmModule = await fetch(
+			"https://cdn.jsdelivr.net/npm/svg2png-wasm/svg2png_wasm_bg.wasm",
+		).then((res) => res.arrayBuffer());
+
+		await initialize(new Uint8Array(wasmModule));
+		initialized = true;
+	}
+};
 
 export const handler: Handlers = {
 	async POST(req) {
 		try {
+			// Make sure WASM is initialized
+			await initializeWasm();
+
 			const svgString = await req.text();
 
-			// Configure resvg
-			const resvg = new Resvg(svgString, {
-				background: "transparent",
-				fitTo: {
-					mode: "width",
-					value: 800,
-				},
+			// Convert SVG to PNG
+			const pngBuffer = await svg2png(svgString, {
+				width: 800, // Set width to match your original config
+				backgroundColor: "transparent",
+				// Add other options as needed
 			});
-
-			// Render to PNG
-			const pngData = resvg.render();
-			const pngBuffer = pngData.asPng();
 
 			return new Response(pngBuffer, {
 				headers: {
