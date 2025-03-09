@@ -19,7 +19,7 @@ export const handler: Handlers = {
 				}
 			}
 
-			return new Response(JSON.stringify({ result: formattedText }), {
+			return new Response(JSON.stringify({ result: formattedText.trim() }), {
 				headers: { "Content-Type": "application/json" },
 			});
 		} catch (error) {

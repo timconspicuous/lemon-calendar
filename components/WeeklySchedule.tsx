@@ -99,7 +99,7 @@ export async function generateScheduleSVG(
 		WeeklySchedule(events, startDate, endDate) as any,
 		{
 			width: 375,
-			height: 800,
+			// height: 800,
 			fonts: [
 				{
 					name: "Lazydog",
