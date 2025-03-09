@@ -1,10 +1,8 @@
 import ical from "npm:ical";
-import {
-	add,
-	isAfter,
-	isBefore,
-	parseISO,
-} from "https://deno.land/x/date_fns@v2.22.1/index.js";
+import add from "https://deno.land/x/date_fns@v2.22.1/add/index.ts"
+import isAfter from "https://deno.land/x/date_fns@v2.22.1/isAfter/index.ts"
+import isBefore from "https://deno.land/x/date_fns@v2.22.1/isBefore/index.ts"
+import parseISO from "https://deno.land/x/date_fns@v2.22.1/parseISO/index.js"
 
 export interface Event {
 	start: Date;
@@ -91,4 +89,44 @@ export function filterTwitchEvents<T extends Event | TwitchEvent>(
 		return isAfter(eventStartTime, now) &&
 			isBefore(eventStartTime, oneWeekFromNow);
 	});
+}
+
+export async function processCalendarRequest(
+	url: URL,
+): Promise<{ events: Event[]; startDate: Date; endDate: Date }> {
+	const targetUrl = url.searchParams.get("url");
+
+	const startDateParam = url.searchParams.get("startDate");
+	const endDateParam = url.searchParams.get("endDate");
+
+	// Check for required parameters
+	if (!targetUrl) {
+		throw new Error("URL is required");
+	}
+
+	if (!startDateParam) {
+		throw new Error("Start date is required");
+	}
+
+	if (!endDateParam) {
+		throw new Error("End date is required");
+	}
+
+	// Parse date parameters
+	const startDate = new Date(startDateParam);
+	const endDate = new Date(endDateParam);
+
+	// Validate date parsing
+	if (isNaN(startDate.getTime())) {
+		throw new Error("Invalid start date format");
+	}
+
+	if (isNaN(endDate.getTime())) {
+		throw new Error("Invalid end date format");
+	}
+
+	const events = await fetchCalendar(targetUrl);
+	const filteredEvents = filterEvents(events, startDate, endDate);
+
+	return { events: filteredEvents, startDate, endDate };
 }

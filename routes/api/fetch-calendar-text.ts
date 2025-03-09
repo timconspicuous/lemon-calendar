@@ -1,24 +1,15 @@
 import { Handlers } from "$fresh/server.ts";
-import {
-	fetchCalendar,
-	filterEvents,
-} from "https://raw.githubusercontent.com/timconspicuous/lemonbot/refs/heads/Deno/utils/calendarUtils.ts";
+import { processCalendarRequest } from "../../utils/calendarUtils.ts";
 
 export const handler: Handlers = {
 	async GET(req) {
 		const url = new URL(req.url);
-		const targetUrl = url.searchParams.get("url");
-
-		if (!targetUrl) {
-			return new Response("URL is required", { status: 400 });
-		}
 
 		try {
-			const events = await fetchCalendar(targetUrl);
-			const filteredEvents = filterEvents(events);
+			const { events } = await processCalendarRequest(url);
 
 			let formattedText = "";
-			for (const event of filteredEvents) {
+			for (const event of events) {
 				const startDate = new Date(event.start);
 				const unixTimestamp = Math.floor(startDate.getTime() / 1000);
 				formattedText +=
@@ -33,7 +24,10 @@ export const handler: Handlers = {
 			});
 		} catch (error) {
 			console.error("Error processing URL:", error);
-			return new Response("Error processing data", { status: 500 });
+			return new Response(
+				error instanceof Error ? error.message : String(error),
+				{ status: 400 },
+			);
 		}
 	},
 };

@@ -2,16 +2,14 @@ import { useState } from "preact/hooks";
 import { IS_BROWSER } from "$fresh/runtime.ts";
 import WeekPicker from "./WeekPicker.tsx";
 
-interface FormContainerProps {
-	onSubmit?: (data: { url: string; startDate: Date; endDate: Date }) => void;
-}
-
-export default function FormContainer({ onSubmit }: FormContainerProps) {
+export default function FormContainer() {
 	const [url, setUrl] = useState<string>("");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [formError, setFormError] = useState<string | null>(null);
+	const [svgData, setSvgData] = useState<string | null>(null);
+	const [textData, setTextData] = useState<string | null>(null);
 
 	// Calculate default week (current week)
 	const getDefaultWeek = () => {
@@ -44,7 +42,7 @@ export default function FormContainer({ onSubmit }: FormContainerProps) {
 	};
 
 	// Handle form submission
-	const handleSubmit = (e: Event) => {
+	const handleSubmit = async (e: Event) => {
 		e.preventDefault();
 
 		// Basic validation
@@ -69,21 +67,61 @@ export default function FormContainer({ onSubmit }: FormContainerProps) {
 		}
 
 		setIsSubmitting(true);
+		setSvgData(null);
+		setTextData(null);
 
-		// Call the onSubmit prop if provided
-		if (onSubmit) {
-			onSubmit({
-				url,
-				startDate,
-				endDate,
+		try {
+			// Fetch SVG data
+			const svgParams = new URLSearchParams({
+				url: url,
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
 			});
+			const svgResponse = await fetch(
+				`/api/fetch-calendar-svg?${svgParams.toString()}`,
+			);
+
+			if (!svgResponse.ok) {
+				throw new Error(`SVG fetch failed: ${svgResponse.statusText}`);
+			}
+
+			const svgContent = await svgResponse.text();
+			setSvgData(svgContent);
+
+			// Fetch text data
+			const textParams = new URLSearchParams({
+				url: url,
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+			});
+			const textResponse = await fetch(
+				`/api/fetch-calendar-text?${textParams.toString()}`,
+			);
+
+			if (!textResponse.ok) {
+				throw new Error(
+					`Text fetch failed: ${textResponse.statusText}`,
+				);
+			}
+
+			const jsonData = await textResponse.json();
+			setTextData(jsonData.result);
+		} catch (error) {
+			console.error("Error fetching data:", error);
+			// setFormError(`Failed to fetch calendar data: ${error.message}`);
+		} finally {
+			setIsSubmitting(false);
 		}
-
-		// If no onSubmit, you could handle form submission here
-		// For example, submit to a Fresh route handler
-
-		setIsSubmitting(false);
 	};
+
+	// Initialize with default week if dates are null
+	if (IS_BROWSER && !startDate && !endDate) {
+		const defaultWeek = getDefaultWeek();
+		if (defaultWeek) {
+			setStartDate(defaultWeek.startDate);
+			setEndDate(defaultWeek.endDate);
+		}
+	}
 
 	return (
 		<div className="form-container">
@@ -116,10 +154,34 @@ export default function FormContainer({ onSubmit }: FormContainerProps) {
 						className="submit-button"
 						disabled={isSubmitting}
 					>
-						{isSubmitting ? "Processing..." : "Analyze Data"}
+						{isSubmitting ? "Processing..." : "Generate Schedule"}
 					</button>
 				</div>
 			</form>
+
+			{/* Results Section */}
+			{(svgData || textData) && (
+				<div className="results-container">
+					<h2>Calendar Results</h2>
+
+					{textData && (
+						<div className="text-container">
+							<h3>Event Listing</h3>
+							<pre className="text-output">{textData}</pre>
+						</div>
+					)}
+
+					{svgData && (
+						<div className="svg-container">
+							<h3>Weekly Schedule</h3>
+							<div
+								// deno-lint-ignore react-no-danger
+								dangerouslySetInnerHTML={{ __html: svgData }}
+							/>
+						</div>
+					)}
+				</div>
+			)}
 
 			<style>
 				{`
@@ -174,6 +236,28 @@ export default function FormContainer({ onSubmit }: FormContainerProps) {
           .submit-button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
+          }
+          
+          .results-container {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+          }
+          
+          .svg-container, .text-container {
+            margin-top: 20px;
+          }
+          
+          .text-output {
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            overflow-x: auto;
           }
         `}
 			</style>

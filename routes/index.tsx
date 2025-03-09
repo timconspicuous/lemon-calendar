@@ -6,7 +6,6 @@ export default function Home() {
 			<div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
 				<h1 class="text-4xl font-bold">Lemon Calendar</h1>
 				<FormContainerIsland />
-				<img src="/api/schedule" alt="Weekly Schedule" />
 			</div>
 		</div>
 	);
