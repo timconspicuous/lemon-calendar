@@ -8,11 +8,18 @@ interface Theme {
 	headerColor: string;
 	dateRangeColor: string;
 	dayColor: string;
-	eventBgColor: string;
+	eventBgColors: {
+		default: string;
+		twitch: string;
+		discord: string;
+	};
 	eventTextColor: string;
 	noEventColor: string;
 	backgroundImagePath: string; // Path to background image
-	eventIconPath?: string; // Path to event SVG icon (optional)
+	iconPaths: {
+		discord: string;
+		twitch: string;
+	};
 }
 
 // Default theme
@@ -21,11 +28,18 @@ const defaultTheme: Theme = {
 	headerColor: "#ffffff",
 	dateRangeColor: "#ffffff",
 	dayColor: "#ffffff",
-	eventBgColor: "#e6d195", //twitch: eebd37 discord: f3af52
+	eventBgColors: {
+		default: "#e6d195",
+		twitch: "#eebd37",
+		discord: "#f3af52",
+	},
 	eventTextColor: "#ffffff",
 	noEventColor: "#ffffff",
 	backgroundImagePath: "./static/background.png",
-	eventIconPath: "./static/discord-icon.svg",
+	iconPaths: {
+		discord: "./static/discord-icon.svg",
+		twitch: "./static/twitch-icon.svg",
+	},
 };
 
 // Theme collection - can be expanded as needed
@@ -36,11 +50,18 @@ const themes: Record<string, Theme> = {
 		headerColor: "#ffffff",
 		dateRangeColor: "#cccccc",
 		dayColor: "#ffffff",
-		eventBgColor: "#333333",
+		eventBgColors: {
+			default: "#333333",
+			twitch: "#333333",
+			discord: "#333333",
+		},
 		eventTextColor: "#ffffff",
 		noEventColor: "#777777",
 		backgroundImagePath: "./static/background.png",
-		eventIconPath: "./static/discord-icon.svg",
+		iconPaths: {
+			discord: "./static/discord-icon.svg",
+			twitch: "./static/twitch-icon.svg",
+		},
 	},
 	// Add more themes as needed
 };
@@ -50,6 +71,7 @@ export default function WeeklySchedule(
 	startDate: Date,
 	endDate: Date,
 	backgroundImageBase64?: string,
+	iconBase64Map?: Record<string, string>,
 	theme: Theme = defaultTheme,
 ) {
 	const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -58,15 +80,40 @@ export default function WeeklySchedule(
 	const displayHeight = displayWidth / aspectRatio;
 
 	// Calculate relative positions
-	const headerPosition = 0.10;
-	const dateRangePosition = 0.15;
-	const scheduleStartPosition = 0.21;
+	const headerPosition = 0.08;
+	const scheduleStartPosition = 0.212;
 	const scheduleHeight = 0.73;
 
 	// Format the date range
 	const startDateFormatted = format(startDate, "dd.MM.", []);
 	const endDateFormatted = format(endDate, "dd.MM.", []);
 	const dateRangeText = `${startDateFormatted} - ${endDateFormatted}`;
+
+	// Helper function to get event background color based on location
+	const getEventBgColor = (event: Event | undefined) => {
+		if (!event || !event.location) return theme.eventBgColors.default;
+
+		const location = event.location.toLowerCase();
+		if (location === "twitch") return theme.eventBgColors.twitch;
+		if (location === "discord") return theme.eventBgColors.discord;
+
+		return theme.eventBgColors.default;
+	};
+
+	// Helper function to get icon based on location
+	const getEventIcon = (event: Event | undefined) => {
+		if (!event || !event.location || !iconBase64Map) return null;
+
+		const location = event.location.toLowerCase();
+		if (location === "twitch" && iconBase64Map.twitch) {
+			return iconBase64Map.twitch;
+		}
+		if (location === "discord" && iconBase64Map.discord) {
+			return iconBase64Map.discord;
+		}
+
+		return null;
+	};
 
 	return (
 		<div
@@ -95,43 +142,57 @@ export default function WeeklySchedule(
 				/>
 			)}
 
-			{/* Header Title */}
+			{/* Header */}
 			<div
+				className="header"
 				style={{
 					position: "absolute",
 					top: `${headerPosition * 100}%`,
-					width: "79%",
-					textAlign: "center",
-					fontFamily: theme.fontFamily,
-					fontSize: "24px",
-					fontWeight: "bold",
-					color: theme.headerColor,
+					width: "100%",
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					justifyContent: "center",
 				}}
 			>
-				Stream Schedule
-			</div>
+				{/* Title */}
+				<div
+					className="title"
+					style={{
+						fontFamily: theme.fontFamily,
+						fontSize: "32px",
+						fontWeight: "bold",
+						color: theme.headerColor,
+						justifyContent: "center",
+						width: "100%",
+						marginBottom: "8px",
+					}}
+				>
+					Stream Schedule
+				</div>
 
-			{/* Date Range */}
-			<div
-				style={{
-					position: "absolute",
-					top: `${dateRangePosition * 100}%`,
-					width: "79%",
-					textAlign: "center",
-					fontFamily: theme.fontFamily,
-					fontSize: "18px",
-					color: theme.dateRangeColor,
-				}}
-			>
-				{dateRangeText}
+				{/* Date Range */}
+				<div
+					className="week-range"
+					style={{
+						fontFamily: theme.fontFamily,
+						fontSize: "20px",
+						color: theme.dateRangeColor,
+						justifyContent: "center",
+						width: "100%",
+					}}
+				>
+					{dateRangeText}
+				</div>
 			</div>
 
 			{/* Weekly Schedule */}
 			<div
+				className="schedule"
 				style={{
 					position: "absolute",
 					top: `${scheduleStartPosition * 100}%`,
-					width: "79%",
+					width: "80%",
 					height: `${scheduleHeight * 100}%`,
 					display: "flex",
 					flexDirection: "column",
@@ -142,9 +203,14 @@ export default function WeeklySchedule(
 					const event = events.find((e) =>
 						format(e.start, "eee", []) === day
 					);
+					const hasEvent = !!event;
+					const eventBgColor = getEventBgColor(event);
+					const eventIcon = getEventIcon(event);
+
 					return (
 						<div
 							key={index}
+							className="event-box"
 							style={{
 								display: "flex",
 								flexDirection: "row",
@@ -152,59 +218,69 @@ export default function WeeklySchedule(
 								justifyContent: "space-between",
 								width: "100%",
 								height: `${100 / days.length - 2}%`,
-								backgroundColor: theme.eventBgColor,
+								backgroundColor: eventBgColor,
 								padding: "10px",
-								borderRadius: "10px",
+								borderRadius: "15px",
 								marginBottom: "8px",
+								fontSize: "1.3em",
 								fontFamily: theme.fontFamily,
+								position: "relative",
 							}}
 						>
+							{/* Location icon overlay */}
+							{eventIcon && (
+								<img
+									src={`data:image/svg+xml;base64,${eventIcon}`}
+									style={{
+										position: "absolute",
+										top: "-12px",
+										left: "-12px",
+										width: "30px",
+										height: "30px",
+										zIndex: 10,
+									}}
+								/>
+							)}
+
 							<div
+								className="weekday"
 								style={{
 									fontWeight: "bold",
 									marginRight: "12px",
-									textAlign: "left",
+									justifyContent: "flex-start",
 									flex: "1",
-									fontSize: "1.2em",
 									color: theme.dayColor,
 								}}
 							>
 								{day}
 							</div>
 
-							{event && (
-								<>
-									<div
-										style={{
-											display: "flex",
-											flexDirection: "column",
-											textAlign: "center",
-											flex: 2,
-											marginRight: "12px",
-											wordWrap: "break-word",
-											fontSize: "1.2em",
-											color: theme.eventTextColor,
-										}}
-									>
-										<div>{event.summary}</div>
-									</div>
-								</>
-							)}
-
 							<div
+								className="summary"
 								style={{
 									display: "flex",
-									textAlign: "right",
-									flex: "1",
-									whiteSpace: "nowrap",
-									color: event
-										? theme.eventTextColor
-										: theme.noEventColor,
-									fontSize: "1.2em",
+									flexDirection: "column",
+									justifyContent: "center",
+									flex: 2,
+									marginRight: "12px",
+									wordWrap: "break-word",
+									color: theme.eventTextColor,
 								}}
 							>
-								{event && format(event.start, "ha", [])}
-								{!event && "No event"}
+								{hasEvent ? event.summary : "-"}
+							</div>
+
+							<div
+								className="time"
+								style={{
+									display: "flex",
+									justifyContent: "flex-end",
+									flex: "1",
+									whiteSpace: "nowrap",
+									color: theme.eventTextColor,
+								}}
+							>
+								{hasEvent ? format(event.start, "ha", []) : ""}
 							</div>
 						</div>
 					);
@@ -239,12 +315,29 @@ export async function generateScheduleSVG(
 		);
 	}
 
+	// Load icon images
+	const iconBase64Map: Record<string, string> = {};
+	try {
+		// Load Discord icon
+		const discordIconData = await Deno.readFile(theme.iconPaths.discord);
+		iconBase64Map.discord = encodeBase64(discordIconData);
+
+		// Load Twitch icon
+		const twitchIconData = await Deno.readFile(theme.iconPaths.twitch);
+		iconBase64Map.twitch = encodeBase64(twitchIconData);
+	} catch (error) {
+		console.error(
+			`Error loading icon images: ${(error as Error).message}`,
+		);
+	}
+
 	const svg = await satori(
 		WeeklySchedule(
 			events,
 			startDate,
 			endDate,
 			backgroundImageBase64,
+			iconBase64Map,
 			theme,
 			// deno-lint-ignore no-explicit-any
 		) as any,
