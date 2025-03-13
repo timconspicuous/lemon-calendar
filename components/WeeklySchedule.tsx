@@ -215,7 +215,6 @@ export default function WeeklySchedule(
 								display: "flex",
 								flexDirection: "row",
 								alignItems: "center",
-								justifyContent: "space-between",
 								width: "100%",
 								height: `${100 / days.length - 2}%`,
 								backgroundColor: eventBgColor,
@@ -259,8 +258,8 @@ export default function WeeklySchedule(
 								className="summary"
 								style={{
 									display: "flex",
-									flexDirection: "column",
 									justifyContent: "center",
+									textAlign: "center",
 									flex: 2,
 									marginRight: "12px",
 									wordWrap: "break-word",
