@@ -115,6 +115,32 @@ export default function WeeklySchedule(
 		return null;
 	};
 
+	const getSummaryFontSize = (summary: string | undefined): string => {
+		const baseFontSize = 1.1; // em
+		const idealLength = 10;
+		const minFontSize = 0.55; // em
+		const reductionStartLength = idealLength;
+		const reductionEndLength = 50; // Length at which minFontSize is reached
+		const fontSizeRange = baseFontSize - minFontSize;
+		const lengthRange = reductionEndLength - reductionStartLength;
+
+		if (!summary) return `${baseFontSize}em`;
+
+		const summaryLength = summary.length;
+
+		if (summaryLength <= idealLength) {
+			return `${baseFontSize}em`;
+		} else if (summaryLength >= reductionEndLength) {
+			return `${minFontSize}em`;
+		} else {
+			const lengthOverIdeal = summaryLength - reductionStartLength;
+			const fontSizeReduction = (lengthOverIdeal / lengthRange) *
+				fontSizeRange;
+			const calculatedFontSize = baseFontSize - fontSizeReduction;
+			return `${calculatedFontSize.toFixed(2)}em`; // Format to 2 decimal places for cleaner output
+		}
+	};
+
 	return (
 		<div
 			style={{
@@ -206,6 +232,7 @@ export default function WeeklySchedule(
 					const hasEvent = !!event;
 					const eventBgColor = getEventBgColor(event);
 					const eventIcon = getEventIcon(event);
+					const summaryFontSize = getSummaryFontSize(event?.summary);
 
 					return (
 						<div
@@ -221,7 +248,7 @@ export default function WeeklySchedule(
 								padding: "10px",
 								borderRadius: "15px",
 								marginBottom: "8px",
-								fontSize: "1.3em",
+								fontSize: "1.2em",
 								fontFamily: theme.fontFamily,
 								position: "relative",
 							}}
@@ -245,7 +272,7 @@ export default function WeeklySchedule(
 								className="weekday"
 								style={{
 									fontWeight: "bold",
-									marginRight: "12px",
+									marginRight: "10px",
 									justifyContent: "flex-start",
 									flex: "1",
 									color: theme.dayColor,
@@ -261,9 +288,10 @@ export default function WeeklySchedule(
 									justifyContent: "center",
 									textAlign: "center",
 									flex: 2,
-									marginRight: "12px",
+									marginRight: "10px",
 									wordWrap: "break-word",
 									color: theme.eventTextColor,
+									fontSize: summaryFontSize,
 								}}
 							>
 								{hasEvent ? event.summary : "-"}
