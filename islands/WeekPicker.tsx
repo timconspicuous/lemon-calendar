@@ -44,18 +44,17 @@ export default function WeekPicker(
 		}
 	}, []);
 
-	// Generate dates for a week
 	const generateWeekDates = (baseDate: Date): Date[] => {
 		const dates: Date[] = [];
 		const weekStart = new Date(baseDate);
-		const day = weekStart.getDay();
+		const day = weekStart.getUTCDay();
 		const diff = day === 0 ? 6 : day - 1; // Adjust for Monday as week start
 
-		weekStart.setDate(weekStart.getDate() - diff);
+		weekStart.setUTCDate(weekStart.getUTCDate() - diff);
 
 		for (let i = 0; i < 7; i++) {
 			const date = new Date(weekStart);
-			date.setDate(date.getDate() + i);
+			date.setUTCDate(weekStart.getUTCDate() + i);
 			dates.push(date);
 		}
 
@@ -69,6 +68,7 @@ export default function WeekPicker(
 			month: "short",
 			day: "numeric",
 			year: "numeric",
+			timeZone: "UTC", // Ensure UTC formatting
 		});
 	};
 
