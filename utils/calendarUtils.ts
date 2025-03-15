@@ -33,7 +33,11 @@ export async function fetchCalendar(
 	if (!icalUrl) {
 		throw new Error("Must provide an iCalendar URL.");
 	}
-	const response = await fetch(icalUrl);
+
+	// Convert webcal:// to https:// for fetching
+	const fetchUrl = icalUrl.replace(/^webcal:\/\//i, "https://");
+
+	const response = await fetch(fetchUrl);
 	if (!response.ok) {
 		throw new Error(
 			`Failed to fetch calendar data: ${response.statusText}`,

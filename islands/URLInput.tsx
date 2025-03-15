@@ -47,8 +47,18 @@ export default function URLInput({ value, onChange, onError }: URLInputProps) {
 	// Handle URL input changes
 	const handleUrlChange = (e: Event) => {
 		const target = e.target as HTMLInputElement;
-		onChange(target.value);
-		if (onError) onError(null);
+		const newValue = target.value;
+
+		onChange(newValue);
+
+		// Validate URL format
+		if (onError) {
+			if (newValue && !newValue.match(/^(https?:\/\/|webcal:\/\/)/i)) {
+				onError("URL must begin with https://, http://, or webcal://");
+			} else {
+				onError(null);
+			}
+		}
 	};
 
 	// Handle URL input focus
@@ -75,7 +85,7 @@ export default function URLInput({ value, onChange, onError }: URLInputProps) {
 				value={value}
 				onInput={handleUrlChange}
 				onFocus={handleUrlFocus}
-				placeholder="https://example.com"
+				placeholder="https://, http://, or webcal://"
 				className="url-input"
 				ref={urlInputRef}
 			/>
