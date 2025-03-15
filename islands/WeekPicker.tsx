@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { IS_BROWSER } from "$fresh/runtime.ts";
+import startOfMonth from "https://deno.land/x/date_fns@v2.22.1/startOfMonth/index.ts";
+import startOfWeek from "https://deno.land/x/date_fns@v2.22.1/startOfWeek/index.ts";
+import addMonths from "https://deno.land/x/date_fns@v2.22.1/addMonths/index.ts";
+import format from "https://deno.land/x/date_fns@v2.22.1/format/index.js";
+import subMonths from "https://deno.land/x/date_fns@v2.22.1/subMonths/index.ts";
 
 interface WeekPickerProps {
 	onWeekChange?: (startDate: Date, endDate: Date) => void;
@@ -11,6 +16,7 @@ export default function WeekPicker(
 ) {
 	const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 	const [displayText, setDisplayText] = useState<string>("Select a week...");
+	const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 	const weekPickerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isPickerVisible, setIsPickerVisible] = useState(false);
@@ -46,11 +52,8 @@ export default function WeekPicker(
 
 	const generateWeekDates = (baseDate: Date): Date[] => {
 		const dates: Date[] = [];
-		const weekStart = new Date(baseDate);
-		const day = weekStart.getUTCDay();
-		const diff = day === 0 ? 6 : day - 1; // Adjust for Monday as week start
-
-		weekStart.setUTCDate(weekStart.getUTCDate() - diff);
+		// Use date-fns to get the Monday of the week in UTC
+		const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
 
 		for (let i = 0; i < 7; i++) {
 			const date = new Date(weekStart);
@@ -63,13 +66,7 @@ export default function WeekPicker(
 
 	// Format date for display
 	const formatDate = (date: Date): string => {
-		return date.toLocaleDateString("en-US", {
-			weekday: "short",
-			month: "short",
-			day: "numeric",
-			year: "numeric",
-			timeZone: "UTC", // Ensure UTC formatting
-		});
+		return format(date, "EEE, MMM d, yyyy", {});
 	};
 
 	// Handle date selection
@@ -88,6 +85,18 @@ export default function WeekPicker(
 		}
 
 		setIsPickerVisible(false);
+	};
+
+	// Navigate to previous month
+	const goToPreviousMonth = (e: Event) => {
+		e.stopPropagation();
+		setCurrentMonth(subMonths(currentMonth, 1));
+	};
+
+	// Navigate to next month
+	const goToNextMonth = (e: Event) => {
+		e.stopPropagation();
+		setCurrentMonth(addMonths(currentMonth, 1));
 	};
 
 	// Toggle date picker visibility
@@ -134,6 +143,23 @@ export default function WeekPicker(
 
 			{isPickerVisible && (
 				<div className="date-picker-popup">
+					<div className="month-navigation">
+						<button
+							className="month-nav-button"
+							onClick={goToPreviousMonth}
+						>
+							&lt;
+						</button>
+						<div className="current-month">
+							{format(currentMonth, "MMMM yyyy", {})}
+						</div>
+						<button
+							className="month-nav-button"
+							onClick={goToNextMonth}
+						>
+							&gt;
+						</button>
+					</div>
 					<div className="calendar-grid">
 						{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
 							(day) => (
@@ -146,12 +172,19 @@ export default function WeekPicker(
 							),
 						)}
 
-						{generateCalendarDays().map((date, index) => (
+						{generateCalendarDays(currentMonth).map((
+							date,
+							index,
+						) => (
 							<div
 								key={index}
 								className={`calendar-day ${
 									isDateInSelectedWeek(date)
 										? "selected-day"
+										: ""
+								} ${
+									date.getMonth() !== currentMonth.getMonth()
+										? "other-month"
 										: ""
 								}`}
 								onClick={() => handleDateSelect(date)}
@@ -203,6 +236,29 @@ export default function WeekPicker(
           z-index: 10;
         }
         
+        .month-navigation {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        
+        .month-nav-button {
+          background-color: #f3f4f6;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          padding: 4px 8px;
+          cursor: pointer;
+        }
+        
+        .month-nav-button:hover {
+          background-color: #e5e7eb;
+        }
+        
+        .current-month {
+          font-weight: bold;
+        }
+        
         .calendar-grid {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
@@ -228,39 +284,35 @@ export default function WeekPicker(
         .selected-day {
           background-color: #bfdbfe;
         }
+        
+        .other-month {
+          color: #9ca3af;
+        }
       `}
 			</style>
 		</div>
 	);
 
-	// Helper function to generate calendar days for current month view
-	function generateCalendarDays(): Date[] {
-		const today = new Date();
-		const year = today.getFullYear();
-		const month = today.getMonth();
+	// Helper function to generate calendar days for the specified month view
+	function generateCalendarDays(date: Date): Date[] {
+		const year = date.getFullYear();
+		const month = date.getMonth();
 
 		// First day of the month
-		const firstDay = new Date(year, month, 1);
-		// Last day of the month
-		const _lastDay = new Date(year, month + 1, 0);
+		const firstDay = startOfMonth(new Date(year, month, 1));
 
 		const days: Date[] = [];
 
 		// Get the first Monday (or previous Monday if 1st is not Monday)
-		const firstMonday = new Date(firstDay);
 		const firstDayOfWeek = firstDay.getDay() || 7; // Convert Sunday (0) to 7
+		const firstMonday = new Date(firstDay);
 		firstMonday.setDate(firstDay.getDate() - (firstDayOfWeek - 1));
 
-		// Generate at least 42 days (6 weeks) to ensure we have a complete view
+		// Generate 6 weeks worth of days to ensure complete month view
 		for (let i = 0; i < 42; i++) {
-			const date = new Date(firstMonday);
-			date.setDate(firstMonday.getDate() + i);
-			days.push(date);
-
-			// Break if we've reached the end of the month and completed the week
-			if (date.getMonth() > month && date.getDay() === 0) {
-				break;
-			}
+			const day = new Date(firstMonday);
+			day.setDate(firstMonday.getDate() + i);
+			days.push(day);
 		}
 
 		return days;
@@ -270,10 +322,12 @@ export default function WeekPicker(
 	function isDateInSelectedWeek(date: Date): boolean {
 		if (selectedDates.length === 0) return false;
 
-		return selectedDates.some((selectedDate) =>
-			selectedDate.getFullYear() === date.getFullYear() &&
-			selectedDate.getMonth() === date.getMonth() &&
-			selectedDate.getDate() === date.getDate()
+		const startOfWeek = selectedDates[0];
+		const endOfWeek = selectedDates[6];
+
+		return (
+			date.getTime() >= startOfWeek.getTime() &&
+			date.getTime() <= endOfWeek.getTime()
 		);
 	}
 }
