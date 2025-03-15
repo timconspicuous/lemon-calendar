@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { IS_BROWSER } from "$fresh/runtime.ts";
-import startOfMonth from "https://deno.land/x/date_fns@v2.22.1/startOfMonth/index.ts";
-import startOfWeek from "https://deno.land/x/date_fns@v2.22.1/startOfWeek/index.ts";
 import addMonths from "https://deno.land/x/date_fns@v2.22.1/addMonths/index.ts";
 import format from "https://deno.land/x/date_fns@v2.22.1/format/index.js";
 import subMonths from "https://deno.land/x/date_fns@v2.22.1/subMonths/index.ts";
@@ -33,7 +31,11 @@ export default function WeekPicker(
 			);
 
 			if (onWeekChange) {
-				onWeekChange(weekDates[0], weekDates[6]);
+				// Ensure we're passing UTC-normalized dates to avoid timezone issues
+				onWeekChange(
+					createUTCDate(weekDates[0]),
+					createUTCDate(weekDates[6]),
+				);
 			}
 		} else {
 			// Set to current week if no default provided
@@ -45,19 +47,53 @@ export default function WeekPicker(
 			);
 
 			if (onWeekChange) {
-				onWeekChange(weekDates[0], weekDates[6]);
+				// Ensure we're passing UTC-normalized dates to avoid timezone issues
+				onWeekChange(
+					createUTCDate(weekDates[0]),
+					createUTCDate(weekDates[6]),
+				);
 			}
 		}
 	}, []);
 
+	// Create a UTC date with the same year, month, day as the input date
+	// This ensures the date is not shifted due to local timezone
+	const createUTCDate = (date: Date): Date => {
+		const utcDate = new Date(Date.UTC(
+			date.getFullYear(),
+			date.getMonth(),
+			date.getDate(),
+			0,
+			0,
+			0,
+			0,
+		));
+		return utcDate;
+	};
+
 	const generateWeekDates = (baseDate: Date): Date[] => {
 		const dates: Date[] = [];
-		// Use date-fns to get the Monday of the week in UTC
-		const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
 
+		// Create a fresh Date object to avoid any timezone shifts
+		const baseDateClone = new Date(baseDate);
+
+		// Get the day of week (0 = Sunday, 1 = Monday, etc.)
+		const dayOfWeek = baseDateClone.getDay();
+
+		// Calculate how many days to subtract to get to Monday
+		const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+		// Set to Monday
+		const weekStart = new Date(baseDateClone);
+		weekStart.setDate(baseDateClone.getDate() - daysToSubtract);
+
+		// Ensure the time component is zeroed out
+		weekStart.setHours(0, 0, 0, 0);
+
+		// Generate the 7 days of the week
 		for (let i = 0; i < 7; i++) {
 			const date = new Date(weekStart);
-			date.setUTCDate(weekStart.getUTCDate() + i);
+			date.setDate(weekStart.getDate() + i);
 			dates.push(date);
 		}
 
@@ -80,7 +116,11 @@ export default function WeekPicker(
 			);
 
 			if (onWeekChange) {
-				onWeekChange(weekDates[0], weekDates[6]);
+				// Ensure we're passing UTC-normalized dates to avoid timezone issues
+				onWeekChange(
+					createUTCDate(weekDates[0]),
+					createUTCDate(weekDates[6]),
+				);
 			}
 		}
 
@@ -299,7 +339,7 @@ export default function WeekPicker(
 		const month = date.getMonth();
 
 		// First day of the month
-		const firstDay = startOfMonth(new Date(year, month, 1));
+		const firstDay = new Date(year, month, 1);
 
 		const days: Date[] = [];
 
@@ -325,9 +365,26 @@ export default function WeekPicker(
 		const startOfWeek = selectedDates[0];
 		const endOfWeek = selectedDates[6];
 
+		// Compare only the date parts, ignoring time
+		const dateOnly = new Date(
+			date.getFullYear(),
+			date.getMonth(),
+			date.getDate(),
+		);
+		const startOnly = new Date(
+			startOfWeek.getFullYear(),
+			startOfWeek.getMonth(),
+			startOfWeek.getDate(),
+		);
+		const endOnly = new Date(
+			endOfWeek.getFullYear(),
+			endOfWeek.getMonth(),
+			endOfWeek.getDate(),
+		);
+
 		return (
-			date.getTime() >= startOfWeek.getTime() &&
-			date.getTime() <= endOfWeek.getTime()
+			dateOnly >= startOnly &&
+			dateOnly <= endOnly
 		);
 	}
 }
