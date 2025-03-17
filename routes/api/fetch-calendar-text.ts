@@ -1,5 +1,6 @@
 import { Handlers } from "$fresh/server.ts";
 import { processCalendarRequest } from "../../utils/calendarUtils.ts";
+import { toZonedTime } from "npm:date-fns-tz";
 
 export const handler: Handlers = {
 	async GET(req) {
@@ -10,7 +11,10 @@ export const handler: Handlers = {
 
 			let formattedText = "";
 			for (const event of events) {
-				const startDate = new Date(event.start);
+				const startDate = toZonedTime(
+					new Date(event.start),
+					event.timezone!,
+				);
 				const unixTimestamp = Math.floor(startDate.getTime() / 1000);
 				formattedText +=
 					`\n- <t:${unixTimestamp}:F> | **${event.summary}**`;
@@ -19,9 +23,12 @@ export const handler: Handlers = {
 				}
 			}
 
-			return new Response(JSON.stringify({ result: formattedText.trim() }), {
-				headers: { "Content-Type": "application/json" },
-			});
+			return new Response(
+				JSON.stringify({ result: formattedText.trim() }),
+				{
+					headers: { "Content-Type": "application/json" },
+				},
+			);
 		} catch (error) {
 			console.error("Error processing URL:", error);
 			return new Response(

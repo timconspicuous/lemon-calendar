@@ -5,6 +5,7 @@ import isBefore from "https://deno.land/x/date_fns@v2.22.1/isBefore/index.ts";
 import parseISO from "https://deno.land/x/date_fns@v2.22.1/parseISO/index.js";
 import startOfDay from "https://deno.land/x/date_fns@v2.22.1/startOfDay/index.ts";
 import endOfDay from "https://deno.land/x/date_fns@v2.22.1/endOfDay/index.ts";
+import { fromZonedTime } from "npm:date-fns-tz";
 
 export interface Event {
 	start: Date;
@@ -12,6 +13,7 @@ export interface Event {
 	summary?: string;
 	location?: string;
 	description?: string;
+	timezone?: string;
 }
 
 export interface TwitchEvent {
@@ -56,15 +58,42 @@ export async function fetchCalendar(
 
 // deno-lint-ignore no-explicit-any
 function parseICalEvents(icalEvents: Record<string, any>): Event[] {
+	// Extract calendar-level timezone if available
+	const calendarTz =
+		Object.values(icalEvents).find((item) => item.type === "VCALENDAR")
+			?.["x-wr-timezone"] || "UTC";
+
 	return Object.values(icalEvents)
 		.filter((event) => event.type === "VEVENT")
-		.map((event) => ({
-			start: event.start,
-			end: event.end,
-			location: event.location || "",
-			summary: event.summary || "",
-			description: event.description || "",
-		}));
+		.map((event) => {
+			// Use event-specific timezone if available, otherwise fallback to calendar timezone
+			const eventTz = event.startZone || calendarTz;
+
+			// Convert dates to UTC for internal comparisons
+			const start = normalizeDate(event.start, eventTz);
+			const end = normalizeDate(event.end, eventTz);
+
+			return {
+				start,
+				end,
+				location: event.location || "",
+				summary: event.summary || "",
+				description: event.description || "",
+				timezone: eventTz,
+			};
+		});
+}
+
+function normalizeDate(date: Date, timezone: string): Date {
+	if (!date) return date;
+
+	try {
+		// Convert the date to UTC while respecting the original timezone
+		return fromZonedTime(date, timezone);
+	} catch (e) {
+		console.warn(`Failed to parse timezone ${timezone}:`, e);
+		return date;
+	}
 }
 
 export function filterEvents(
@@ -72,8 +101,12 @@ export function filterEvents(
 	weekStart: Date,
 	weekEnd: Date,
 ): Event[] {
+	// Ensure weekStart and weekEnd are in UTC for comparison
+	const utcWeekStart = new Date(weekStart.toISOString());
+	const utcWeekEnd = new Date(weekEnd.toISOString());
+
 	const weeklyEvents = events.filter((event) =>
-		isAfter(event.start, weekStart) && isBefore(event.start, weekEnd)
+		isAfter(event.start, utcWeekStart) && isBefore(event.start, utcWeekEnd)
 	);
 
 	return weeklyEvents;

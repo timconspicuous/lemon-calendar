@@ -1,6 +1,7 @@
 import satori from "https://esm.sh/satori@0.12.1";
 import format from "https://deno.land/x/date_fns@v2.22.1/format/index.js";
 import { Event } from "../utils/calendarUtils.ts";
+import { toZonedTime } from "npm:date-fns-tz";
 
 // Define theme interface for styling options
 interface Theme {
@@ -307,7 +308,16 @@ export default function WeeklySchedule(
 									color: theme.eventTextColor,
 								}}
 							>
-								{hasEvent ? format(event.start, "ha", []) : ""}
+								{hasEvent
+									? format(
+										toZonedTime(
+											event.start,
+											event.timezone!,
+										),
+										"ha",
+										[],
+									)
+									: ""}
 							</div>
 						</div>
 					);
