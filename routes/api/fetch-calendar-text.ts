@@ -1,6 +1,5 @@
 import { Handlers } from "$fresh/server.ts";
 import { processCalendarRequest } from "../../utils/calendarUtils.ts";
-import { toZonedTime } from "npm:date-fns-tz";
 
 export const handler: Handlers = {
 	async GET(req) {
@@ -11,11 +10,7 @@ export const handler: Handlers = {
 
 			let formattedText = "";
 			for (const event of events) {
-				const startDate = toZonedTime(
-					new Date(event.start),
-					event.timezone!,
-				);
-				const unixTimestamp = Math.floor(startDate.getTime() / 1000);
+				const unixTimestamp = Math.floor(event.start.getTime() / 1000);
 				formattedText +=
 					`\n- <t:${unixTimestamp}:F> | **${event.summary}**`;
 				if (event.description) {
