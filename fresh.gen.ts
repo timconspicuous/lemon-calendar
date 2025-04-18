@@ -10,6 +10,7 @@ import * as $api_svg_to_png from "./routes/api/svg-to-png.ts";
 import * as $index from "./routes/index.tsx";
 import * as $EventFormatter from "./islands/EventFormatter.tsx";
 import * as $FormContainer from "./islands/FormContainer.tsx";
+import * as $LocalStorageInput from "./islands/LocalStorageInput.tsx";
 import * as $ResultsDisplay from "./islands/ResultsDisplay.tsx";
 import * as $URLInput from "./islands/URLInput.tsx";
 import * as $WeekPicker from "./islands/WeekPicker.tsx";
@@ -27,6 +28,7 @@ const manifest = {
 	islands: {
 		"./islands/EventFormatter.tsx": $EventFormatter,
 		"./islands/FormContainer.tsx": $FormContainer,
+		"./islands/LocalStorageInput.tsx": $LocalStorageInput,
 		"./islands/ResultsDisplay.tsx": $ResultsDisplay,
 		"./islands/URLInput.tsx": $URLInput,
 		"./islands/WeekPicker.tsx": $WeekPicker,
