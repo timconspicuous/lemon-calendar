@@ -53,6 +53,7 @@ export default function EventFormatter(
 				maxHistoryItems={10}
 				helpText="Available keywords: {timestamp}, {summary}, {description}, {location}"
 				className="format-input-wrapper"
+				defaultValue={defaultFormat}
 			/>
 
 			<style>

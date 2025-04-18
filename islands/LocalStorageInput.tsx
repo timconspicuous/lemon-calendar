@@ -13,6 +13,7 @@ export interface LocalStorageInputProps {
 	maxHistoryItems?: number;
 	helpText?: string;
 	className?: string;
+	defaultValue?: string; // Optional default value
 }
 
 export default function LocalStorageInput({
@@ -27,6 +28,7 @@ export default function LocalStorageInput({
 	maxHistoryItems = 10,
 	helpText,
 	className = "",
+	defaultValue,
 }: LocalStorageInputProps) {
 	const [history, setHistory] = useState<string[]>([]);
 	const [showHistory, setShowHistory] = useState<boolean>(false);
@@ -126,10 +128,54 @@ export default function LocalStorageInput({
 		}
 	};
 
+	// Delete item from history
+	const deleteItem = (itemToDelete: string, e: Event) => {
+		e.stopPropagation(); // Prevent click from bubbling to parent (which would select the item)
+
+		const newHistory = history.filter((item) => item !== itemToDelete);
+		setHistory(newHistory);
+
+		// Save updated history to localStorage
+		if (IS_BROWSER) {
+			localStorage.setItem(historyStorageKey, JSON.stringify(newHistory));
+		}
+	};
+
+	// Reset to default value
+	const resetToDefault = () => {
+		if (!defaultValue) return;
+
+		// Set input value to default
+		onChange(defaultValue);
+
+		// Remove saved value from localStorage to ensure default is used on next load
+		if (IS_BROWSER) {
+			localStorage.removeItem(storageKey);
+		}
+
+		// Focus the input after reset
+		if (inputRef.current) {
+			inputRef.current.focus();
+		}
+	};
+
 	return (
 		<div className={`local-storage-input-container ${className}`}>
 			<form onSubmit={handleSubmit}>
-				<label htmlFor={id}>{label}</label>
+				<div className="label-with-reset">
+					<label htmlFor={id}>{label}</label>
+					{defaultValue && (
+						<button
+							type="button"
+							className="reset-button"
+							onClick={resetToDefault}
+							title="Reset to default value"
+						>
+							Reset to Default
+						</button>
+					)}
+				</div>
+
 				<div className="input-with-button">
 					<input
 						id={id}
@@ -152,9 +198,23 @@ export default function LocalStorageInput({
 							<div
 								key={index}
 								className="history-item"
-								onClick={() => selectItem(historyItem)}
 							>
-								{historyItem}
+								<span
+									className="history-item-text"
+									onClick={() => selectItem(historyItem)}
+								>
+									{historyItem}
+								</span>
+								<button
+									type="button"
+									className="delete-button"
+									onClick={(e) =>
+										deleteItem(historyItem, e)}
+									aria-label={`Delete ${historyItem}`}
+									title="Delete from history"
+								>
+									🗑️
+								</button>
 							</div>
 						))}
 					</div>
@@ -166,6 +226,27 @@ export default function LocalStorageInput({
           .local-storage-input-container {
             position: relative;
             margin-bottom: 10px;
+          }
+          
+          .label-with-reset {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+          }
+          
+          .reset-button {
+            background: none;
+            border: none;
+            color: #1976d2;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+          }
+          
+          .reset-button:hover {
+            color: #1565c0;
           }
           
           .input-with-button {
@@ -218,15 +299,37 @@ export default function LocalStorageInput({
           }
           
           .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 8px 12px;
             cursor: pointer;
+          }
+          
+          .history-item:hover {
+            background-color: #f5f5f5;
+          }
+          
+          .history-item-text {
+            flex: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
           }
           
-          .history-item:hover {
-            background-color: #f5f5f5;
+          .delete-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 0 0 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            line-height: 1;
+          }
+          
+          .delete-button:hover {
+            opacity: 1;
           }
         `}
 			</style>
