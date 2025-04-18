@@ -4,8 +4,8 @@
 
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
+import * as $api_fetch_calendar_events from "./routes/api/fetch-calendar-events.ts";
 import * as $api_fetch_calendar_svg from "./routes/api/fetch-calendar-svg.ts";
-import * as $api_fetch_calendar_text from "./routes/api/fetch-calendar-events.ts";
 import * as $api_svg_to_png from "./routes/api/svg-to-png.ts";
 import * as $index from "./routes/index.tsx";
 import * as $EventFormatter from "./islands/EventFormatter.tsx";
@@ -19,8 +19,8 @@ const manifest = {
 	routes: {
 		"./routes/_404.tsx": $_404,
 		"./routes/_app.tsx": $_app,
+		"./routes/api/fetch-calendar-events.ts": $api_fetch_calendar_events,
 		"./routes/api/fetch-calendar-svg.ts": $api_fetch_calendar_svg,
-		"./routes/api/fetch-calendar-text.ts": $api_fetch_calendar_text,
 		"./routes/api/svg-to-png.ts": $api_svg_to_png,
 		"./routes/index.tsx": $index,
 	},
