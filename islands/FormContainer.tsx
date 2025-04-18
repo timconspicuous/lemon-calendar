@@ -16,7 +16,7 @@ export default function FormContainer() {
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [svgData, setSvgData] = useState<string | null>(null);
-	const [textData, setTextData] = useState<string | null>(null);
+	const [events, setEvents] = useState<ICalEvent[] | null>(null);
 	const [urlHistory, setUrlHistory] = useState<string[]>([]);
 
 	// Initialize with default week if dates are null
@@ -67,13 +67,33 @@ export default function FormContainer() {
 
 		setIsSubmitting(true);
 		setSvgData(null);
-		setTextData(null);
+		setEvents(null);
 
 		// Save the valid URL to history
 		const updatedHistory = saveUrlToHistory(url, urlHistory);
 		setUrlHistory(updatedHistory);
 
 		try {
+			// Fetch events data
+			const eventsParams = new URLSearchParams({
+				url: url,
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+			});
+
+			const eventsResponse = await fetch(
+				`/api/fetch-calendar-events?${eventsParams.toString()}`,
+			);
+
+			if (!eventsResponse.ok) {
+				throw new Error(
+					`Events fetch failed: ${eventsResponse.statusText}`,
+				);
+			}
+
+			const jsonData = await eventsResponse.json();
+			setEvents(jsonData.events);
+
 			// Fetch SVG data
 			const svgParams = new URLSearchParams({
 				url: url,
@@ -90,25 +110,6 @@ export default function FormContainer() {
 
 			const svgContent = await svgResponse.text();
 			setSvgData(svgContent);
-
-			// Fetch text data
-			const textParams = new URLSearchParams({
-				url: url,
-				startDate: startDate.toISOString(),
-				endDate: endDate.toISOString(),
-			});
-			const textResponse = await fetch(
-				`/api/fetch-calendar-text?${textParams.toString()}`,
-			);
-
-			if (!textResponse.ok) {
-				throw new Error(
-					`Text fetch failed: ${textResponse.statusText}`,
-				);
-			}
-
-			const jsonData = await textResponse.json();
-			setTextData(jsonData.result);
 		} catch (error) {
 			console.error("Error fetching data:", error);
 			setFormError(
@@ -154,7 +155,7 @@ export default function FormContainer() {
 			</form>
 
 			{/* Results Section */}
-			<ResultsDisplay svgData={svgData} textData={textData} />
+			<ResultsDisplay svgData={svgData} events={events} />
 
 			<style>
 				{`

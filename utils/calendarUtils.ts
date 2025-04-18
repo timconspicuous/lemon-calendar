@@ -6,15 +6,6 @@ import parseISO from "https://deno.land/x/date_fns@v2.22.1/parseISO/index.js";
 import startOfDay from "https://deno.land/x/date_fns@v2.22.1/startOfDay/index.ts";
 import endOfDay from "https://deno.land/x/date_fns@v2.22.1/endOfDay/index.ts";
 
-export interface Event {
-	start: Date;
-	end: Date;
-	summary?: string;
-	location?: string;
-	description?: string;
-	timezone?: string;
-}
-
 export interface TwitchEvent {
 	id: string;
 	start_time: string;
@@ -30,7 +21,7 @@ export interface TwitchEvent {
 
 export async function fetchCalendar(
 	icalUrl: string | undefined,
-): Promise<Event[]> {
+): Promise<ICalEvent[]> {
 	if (!icalUrl) {
 		throw new Error("Must provide an iCalendar URL.");
 	}
@@ -71,7 +62,7 @@ export async function fetchCalendar(
 }
 
 // deno-lint-ignore no-explicit-any
-function parseICalEvents(icalEvents: Record<string, any>): Event[] {
+function parseICalEvents(icalEvents: Record<string, any>): ICalEvent[] {
 	return Object.values(icalEvents)
 		.filter((event) => event.type === "VEVENT")
 		.map((event) => {
@@ -90,10 +81,10 @@ function parseICalEvents(icalEvents: Record<string, any>): Event[] {
 }
 
 export function filterEvents(
-	events: Event[],
+	events: ICalEvent[],
 	weekStart: Date,
 	weekEnd: Date,
-): Event[] {
+): ICalEvent[] {
 	// Ensure weekStart and weekEnd are in UTC for comparison
 	const utcWeekStart = new Date(weekStart.toISOString());
 	const utcWeekEnd = new Date(weekEnd.toISOString());
@@ -105,7 +96,7 @@ export function filterEvents(
 	return weeklyEvents;
 }
 
-export function filterTwitchEvents<T extends Event | TwitchEvent>(
+export function filterTwitchEvents<T extends ICalEvent | TwitchEvent>(
 	events: T[],
 	currentDate: Date = new Date(),
 ): T[] {
@@ -125,7 +116,7 @@ export function filterTwitchEvents<T extends Event | TwitchEvent>(
 
 export async function processCalendarRequest(
 	url: URL,
-): Promise<{ events: Event[]; startDate: Date; endDate: Date }> {
+): Promise<{ events: ICalEvent[]; startDate: Date; endDate: Date }> {
 	const targetUrl = url.searchParams.get("url");
 
 	const startDateParam = url.searchParams.get("startDate");

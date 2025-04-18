@@ -8,18 +8,9 @@ export const handler: Handlers = {
 		try {
 			const { events } = await processCalendarRequest(url);
 
-			let formattedText = "";
-			for (const event of events) {
-				const unixTimestamp = Math.floor(event.start.getTime() / 1000);
-				formattedText +=
-					`\n- <t:${unixTimestamp}:F> | **${event.summary}**`;
-				if (event.description) {
-					formattedText += ` | ${event.description}`;
-				}
-			}
-
+			// Return the raw events array as JSON
 			return new Response(
-				JSON.stringify({ result: formattedText.trim() }),
+				JSON.stringify({ events }),
 				{
 					headers: { "Content-Type": "application/json" },
 				},

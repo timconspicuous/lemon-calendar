@@ -1,22 +1,24 @@
 import { useState } from "preact/hooks";
+import EventFormatter from "./EventFormatter.tsx";
 
 interface ResultsDisplayProps {
 	svgData: string | null;
-	textData: string | null;
+	events: ICalEvent[] | null;
 }
 
 export default function ResultsDisplay(
-	{ svgData, textData }: ResultsDisplayProps,
+	{ svgData, events }: ResultsDisplayProps,
 ) {
 	const [copyMessage, setCopyMessage] = useState<string | null>(null);
 	const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+	const [formattedText, setFormattedText] = useState<string>("");
 
 	// Copy text to clipboard
 	const copyTextToClipboard = async () => {
-		if (!textData) return;
+		if (!formattedText) return;
 
 		try {
-			await navigator.clipboard.writeText(textData);
+			await navigator.clipboard.writeText(formattedText);
 			setCopyMessage("Copied to clipboard!");
 			setTimeout(() => setCopyMessage(null), 2000);
 		} catch (_err) {
@@ -69,13 +71,13 @@ export default function ResultsDisplay(
 		}
 	};
 
-	if (!svgData && !textData) return null;
+	if (!svgData && !events) return null;
 
 	return (
 		<div className="results-container">
 			<h2>Calendar Results</h2>
 
-            {textData && (
+			{events && events.length > 0 && (
 				<div className="text-container">
 					<div className="result-header">
 						<h3>Event Listing</h3>
@@ -87,7 +89,13 @@ export default function ResultsDisplay(
 							{copyMessage || "Copy to Clipboard"}
 						</button>
 					</div>
-					<pre className="text-output">{textData}</pre>
+
+					<EventFormatter
+						events={events}
+						onFormattedTextChange={setFormattedText}
+					/>
+
+					<pre className="text-output">{formattedText}</pre>
 				</div>
 			)}
 

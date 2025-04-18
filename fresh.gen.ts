@@ -5,9 +5,10 @@
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
 import * as $api_fetch_calendar_svg from "./routes/api/fetch-calendar-svg.ts";
-import * as $api_fetch_calendar_text from "./routes/api/fetch-calendar-text.ts";
+import * as $api_fetch_calendar_text from "./routes/api/fetch-calendar-events.ts";
 import * as $api_svg_to_png from "./routes/api/svg-to-png.ts";
 import * as $index from "./routes/index.tsx";
+import * as $EventFormatter from "./islands/EventFormatter.tsx";
 import * as $FormContainer from "./islands/FormContainer.tsx";
 import * as $ResultsDisplay from "./islands/ResultsDisplay.tsx";
 import * as $URLInput from "./islands/URLInput.tsx";
@@ -24,6 +25,7 @@ const manifest = {
 		"./routes/index.tsx": $index,
 	},
 	islands: {
+		"./islands/EventFormatter.tsx": $EventFormatter,
 		"./islands/FormContainer.tsx": $FormContainer,
 		"./islands/ResultsDisplay.tsx": $ResultsDisplay,
 		"./islands/URLInput.tsx": $URLInput,
