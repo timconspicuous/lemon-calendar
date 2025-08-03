@@ -1,6 +1,5 @@
 import satori from "https://esm.sh/satori@0.12.1";
 import format from "https://deno.land/x/date_fns@v2.22.1/format/index.js";
-import { Event } from "../utils/calendarUtils.ts";
 import { toZonedTime } from "npm:date-fns-tz";
 
 // Define theme interface for styling options
@@ -13,6 +12,7 @@ interface Theme {
 		default: string;
 		twitch: string;
 		discord: string;
+		youtube: string;
 	};
 	eventTextColor: string;
 	noEventColor: string;
@@ -20,6 +20,7 @@ interface Theme {
 	iconPaths: {
 		discord: string;
 		twitch: string;
+		youtube: string;
 	};
 }
 
@@ -33,6 +34,7 @@ const defaultTheme: Theme = {
 		default: "#e6d195",
 		twitch: "#eebd37",
 		discord: "#f3af52",
+		youtube: "#ff8e46",
 	},
 	eventTextColor: "#ffffff",
 	noEventColor: "#ffffff",
@@ -40,35 +42,36 @@ const defaultTheme: Theme = {
 	iconPaths: {
 		discord: "./static/discord-icon.svg",
 		twitch: "./static/twitch-icon.svg",
+		youtube: "./static/youtube-icon.svg",
 	},
 };
 
 // Theme collection - can be expanded as needed
-const themes: Record<string, Theme> = {
-	"light": defaultTheme,
-	"dark": {
-		fontFamily: "Lazydog",
-		headerColor: "#ffffff",
-		dateRangeColor: "#cccccc",
-		dayColor: "#ffffff",
-		eventBgColors: {
-			default: "#333333",
-			twitch: "#333333",
-			discord: "#333333",
-		},
-		eventTextColor: "#ffffff",
-		noEventColor: "#777777",
-		backgroundImagePath: "./static/background.png",
-		iconPaths: {
-			discord: "./static/discord-icon.svg",
-			twitch: "./static/twitch-icon.svg",
-		},
-	},
-	// Add more themes as needed
-};
+// const themes: Record<string, Theme> = {
+// 	"light": defaultTheme,
+// 	"dark": {
+// 		fontFamily: "Lazydog",
+// 		headerColor: "#ffffff",
+// 		dateRangeColor: "#cccccc",
+// 		dayColor: "#ffffff",
+// 		eventBgColors: {
+// 			default: "#333333",
+// 			twitch: "#333333",
+// 			discord: "#333333",
+// 		},
+// 		eventTextColor: "#ffffff",
+// 		noEventColor: "#777777",
+// 		backgroundImagePath: "./static/background.png",
+// 		iconPaths: {
+// 			discord: "./static/discord-icon.svg",
+// 			twitch: "./static/twitch-icon.svg",
+// 		},
+// 	},
+// 	// Add more themes as needed
+// };
 
 export default function WeeklySchedule(
-	events: Event[],
+	events: ICalEvent[],
 	startDate: Date,
 	endDate: Date,
 	backgroundImageBase64?: string,
@@ -91,18 +94,19 @@ export default function WeeklySchedule(
 	const dateRangeText = `${startDateFormatted} - ${endDateFormatted}`;
 
 	// Helper function to get event background color based on location
-	const getEventBgColor = (event: Event | undefined) => {
+	const getEventBgColor = (event: ICalEvent | undefined) => {
 		if (!event || !event.location) return theme.eventBgColors.default;
 
 		const location = event.location.toLowerCase();
 		if (location === "twitch") return theme.eventBgColors.twitch;
 		if (location === "discord") return theme.eventBgColors.discord;
+		if (location === "youtube") return theme.eventBgColors.youtube;
 
 		return theme.eventBgColors.default;
 	};
 
 	// Helper function to get icon based on location
-	const getEventIcon = (event: Event | undefined) => {
+	const getEventIcon = (event: ICalEvent | undefined) => {
 		if (!event || !event.location || !iconBase64Map) return null;
 
 		const location = event.location.toLowerCase();
@@ -111,6 +115,9 @@ export default function WeeklySchedule(
 		}
 		if (location === "discord" && iconBase64Map.discord) {
 			return iconBase64Map.discord;
+		}
+		if (location === "youtube" && iconBase64Map.youtube) {
+			return iconBase64Map.youtube;
 		}
 
 		return null;
@@ -328,13 +335,14 @@ export default function WeeklySchedule(
 }
 
 export async function generateScheduleSVG(
-	events: Event[],
+	events: ICalEvent[],
 	startDate: Date,
 	endDate: Date,
 	themeName: string = "light",
 ) {
 	// Get the theme
-	const theme = themes[themeName] || defaultTheme;
+	//const theme = themes[themeName] || defaultTheme;
+	const theme = defaultTheme;
 
 	// Load font
 	const fontPath = "./static/fonts/Lazydog.ttf";
@@ -362,6 +370,10 @@ export async function generateScheduleSVG(
 		// Load Twitch icon
 		const twitchIconData = await Deno.readFile(theme.iconPaths.twitch);
 		iconBase64Map.twitch = encodeBase64(twitchIconData);
+
+		// Load YouTube icon
+		const youtubeIconData = await Deno.readFile(theme.iconPaths.youtube);
+		iconBase64Map.youtube = encodeBase64(youtubeIconData);
 	} catch (error) {
 		console.error(
 			`Error loading icon images: ${(error as Error).message}`,
