@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import EventFormatter from "./EventFormatter.tsx";
+import DiscordWebhook from "./DiscordWebhook.tsx";
 
 interface ResultsDisplayProps {
 	svgData: string | null;
@@ -114,6 +115,8 @@ export default function ResultsDisplay(
 					<div dangerouslySetInnerHTML={{ __html: svgData }} />
 				</div>
 			)}
+
+			{svgData && <DiscordWebhook svgData={svgData} events={events} />}
 
 			<style>
 				{`

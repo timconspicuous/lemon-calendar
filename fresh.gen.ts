@@ -8,6 +8,7 @@ import * as $api_fetch_calendar_events from "./routes/api/fetch-calendar-events.
 import * as $api_fetch_calendar_svg from "./routes/api/fetch-calendar-svg.ts";
 import * as $api_svg_to_png from "./routes/api/svg-to-png.ts";
 import * as $index from "./routes/index.tsx";
+import * as $DiscordWebhook from "./islands/DiscordWebhook.tsx";
 import * as $EventFormatter from "./islands/EventFormatter.tsx";
 import * as $FormContainer from "./islands/FormContainer.tsx";
 import * as $LocalStorageInput from "./islands/LocalStorageInput.tsx";
@@ -26,6 +27,7 @@ const manifest = {
 		"./routes/index.tsx": $index,
 	},
 	islands: {
+		"./islands/DiscordWebhook.tsx": $DiscordWebhook,
 		"./islands/EventFormatter.tsx": $EventFormatter,
 		"./islands/FormContainer.tsx": $FormContainer,
 		"./islands/LocalStorageInput.tsx": $LocalStorageInput,
